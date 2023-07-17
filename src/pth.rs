@@ -1,11 +1,14 @@
+use color_eyre::{
+    eyre::{bail, eyre},
+    Result,
+};
+use log::debug;
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::PathBuf;
-use color_eyre::{Result, eyre::{eyre, bail}};
-use log::debug;
 
-use crate::pickle::{self};
 use crate::pickle::PyValue;
+use crate::pickle::{self};
 
 fn first_persid(pyv: &PyValue) -> Option<PyValue> {
     let mut persid = None;
@@ -92,7 +95,7 @@ impl safetensors::View for PthTensorLoc {
 
 #[derive(Debug)]
 pub struct PthReader {
-    pub (crate) tensors: HashMap<String, PthTensorLoc>,
+    pub(crate) tensors: HashMap<String, PthTensorLoc>,
 }
 
 impl PthReader {
@@ -116,8 +119,7 @@ impl PthReader {
                     .by_name(&pklname)
                     .map_err(|e| eyre!("zip error: {:?}", e))?;
                 let mut pklreader = std::io::BufReader::new(zf);
-                let mut unpickle = pickle::Unpickler::default();
-                let pv = unpickle.load(&mut pklreader)?;
+                let pv = pickle::unpickle(&mut pklreader)?;
                 let mut srd = None;
                 pv.visit(&mut |pyv: &PyValue| {
                     if let PyValue::Dict(kvs) = pyv {
@@ -168,7 +170,9 @@ impl PthReader {
                                                     PthTensorLoc {
                                                         dtype: storage.as_str().try_into()?,
                                                         zipfile: path.clone(),
-                                                        zip_inner_file: format!("{pklbase}/data/{zfn}"),
+                                                        zip_inner_file: format!(
+                                                            "{pklbase}/data/{zfn}"
+                                                        ),
                                                         nelements: *size as usize,
                                                         shape,
                                                     },

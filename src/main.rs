@@ -6,7 +6,6 @@ use structopt::StructOpt;
 mod pickle;
 mod pth;
 
-
 #[derive(StructOpt, Debug)]
 struct Opt {
     #[structopt(parse(from_os_str))]
